@@ -1,5 +1,5 @@
-//modified by:
-//date:
+//modified by: Steven Nez
+//date: August 23, 2022
 //
 //author: Gordon Griesel
 //date: Spring 2022
