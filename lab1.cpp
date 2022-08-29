@@ -1,6 +1,6 @@
 //modified by: Steven Nez
 //date: August 23, 2022
-//
+//test for class commit
 //author: Gordon Griesel
 //date: Spring 2022
 //purpose: get openGL working on your personal computer
