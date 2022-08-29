@@ -1,6 +1,6 @@
 //modified by: Steven Nez
 //date: August 23, 2022
-//test to see if it updates it
+//
 //author: Gordon Griesel
 //date: Spring 2022
 //purpose: get openGL working on your personal computer
