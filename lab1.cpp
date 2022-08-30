@@ -1,6 +1,6 @@
-//modified by: Steven Nez
-//date: August 23, 2022
-//
+//modified by:Steven Nez
+//date:August 23
+//testing
 //author: Gordon Griesel
 //date: Spring 2022
 //purpose: get openGL working on your personal computer
@@ -17,24 +17,23 @@ using namespace std;
 #include <X11/keysym.h>
 #include <GL/glx.h>
 
-
 //some structures
 
 class Global {
     public:
-	int xres, yres;
-	float w;
-	float dir;
-	float pos[2];
-	Global();
+        int xres, yres;
+        float w;
+        float dir;
+        float pos[2];
+        Global();
 } g;
 
 class X11_wrapper {
-    private:
+private:
 	Display *dpy;
 	Window win;
 	GLXContext glc;
-    public:
+public:
 	~X11_wrapper();
 	X11_wrapper();
 	void set_title();
@@ -59,23 +58,23 @@ void render(void);
 //=====================================
 int main()
 {
-    init_opengl();
-    //Main loop
-    int done = 0;
-    while (!done) {
-	//Process external events.
-	while (x11.getXPending()) {
-	    XEvent e = x11.getXNextEvent();
-	    x11.check_resize(&e);
-	    x11.check_mouse(&e);
-	    done = x11.check_keys(&e);
+	init_opengl();
+	//Main loop
+	int done = 0;
+	while (!done) {
+		//Process external events.
+		while (x11.getXPending()) {
+			XEvent e = x11.getXNextEvent();
+			x11.check_resize(&e);
+			x11.check_mouse(&e);
+			done = x11.check_keys(&e);
+		}
+		physics();
+		render();
+		x11.swapBuffers();
+		usleep(200);
 	}
-	physics();
-	render();
-	x11.swapBuffers();
-	usleep(200);
-    }
-    return 0;
+	return 0;
 }
 
 Global::Global()
@@ -90,174 +89,171 @@ Global::Global()
 
 X11_wrapper::~X11_wrapper()
 {
-    XDestroyWindow(dpy, win);
-    XCloseDisplay(dpy);
+	XDestroyWindow(dpy, win);
+	XCloseDisplay(dpy);
 }
 
 X11_wrapper::X11_wrapper()
 {
-    GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
-    int w = g.xres, h = g.yres;
-    dpy = XOpenDisplay(NULL);
-    if (dpy == NULL) {
-	cout << "\n\tcannot connect to X server\n" << endl;
-	exit(EXIT_FAILURE);
-    }
-    Window root = DefaultRootWindow(dpy);
-    XVisualInfo *vi = glXChooseVisual(dpy, 0, att);
-    if (vi == NULL) {
-	cout << "\n\tno appropriate visual found\n" << endl;
-	exit(EXIT_FAILURE);
-    } 
-    Colormap cmap = XCreateColormap(dpy, root, vi->visual, AllocNone);
-    XSetWindowAttributes swa;
-    swa.colormap = cmap;
-    swa.event_mask =
-	ExposureMask | KeyPressMask | KeyReleaseMask |
-	ButtonPress | ButtonReleaseMask |
-	PointerMotionMask |
-	StructureNotifyMask | SubstructureNotifyMask;
-    win = XCreateWindow(dpy, root, 0, 0, w, h, 0, vi->depth,
-	    InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
-    set_title();
-    glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
-    glXMakeCurrent(dpy, win, glc);
+	GLint att[] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
+	int w = g.xres, h = g.yres;
+	dpy = XOpenDisplay(NULL);
+	if (dpy == NULL) {
+		cout << "\n\tcannot connect to X server\n" << endl;
+		exit(EXIT_FAILURE);
+	}
+	Window root = DefaultRootWindow(dpy);
+	XVisualInfo *vi = glXChooseVisual(dpy, 0, att);
+	if (vi == NULL) {
+		cout << "\n\tno appropriate visual found\n" << endl;
+		exit(EXIT_FAILURE);
+	} 
+	Colormap cmap = XCreateColormap(dpy, root, vi->visual, AllocNone);
+	XSetWindowAttributes swa;
+	swa.colormap = cmap;
+	swa.event_mask =
+		ExposureMask | KeyPressMask | KeyReleaseMask |
+		ButtonPress | ButtonReleaseMask |
+		PointerMotionMask |
+		StructureNotifyMask | SubstructureNotifyMask;
+	win = XCreateWindow(dpy, root, 0, 0, w, h, 0, vi->depth,
+		InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
+	set_title();
+	glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
+	glXMakeCurrent(dpy, win, glc);
 }
 
 void X11_wrapper::set_title()
 {
-    //Set the window title bar.
-    XMapWindow(dpy, win);
-    XStoreName(dpy, win, "3350 Lab1");
+	//Set the window title bar.
+	XMapWindow(dpy, win);
+	XStoreName(dpy, win, "3350 Lab1");
 }
 
 bool X11_wrapper::getXPending()
 {
-    //See if there are pending events.
-    return XPending(dpy);
+	//See if there are pending events.
+	return XPending(dpy);
 }
 
 XEvent X11_wrapper::getXNextEvent()
 {
-    //Get a pending event.
-    XEvent e;
-    XNextEvent(dpy, &e);
-    return e;
+	//Get a pending event.
+	XEvent e;
+	XNextEvent(dpy, &e);
+	return e;
 }
 
 void X11_wrapper::swapBuffers()
 {
-    glXSwapBuffers(dpy, win);
+	glXSwapBuffers(dpy, win);
 }
 
 void X11_wrapper::reshape_window(int width, int height)
 {
-    //window has been resized.
-    g.xres = width;
-    g.yres = height;
-    //
-    glViewport(0, 0, (GLint)width, (GLint)height);
-    glMatrixMode(GL_PROJECTION); glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW); glLoadIdentity();
-    glOrtho(0, g.xres, 0, g.yres, -1, 1);
+	//window has been resized.
+	g.xres = width;
+	glViewport(0, 0, (GLint)width, (GLint)height);
+	glMatrixMode(GL_PROJECTION); glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+	glOrtho(0, g.xres, 0, g.yres, -1, 1);
 }
 
 void X11_wrapper::check_resize(XEvent *e)
 {
-    //The ConfigureNotify is sent by the
-    //server if the window is resized.
-    if (e->type != ConfigureNotify)
-	return;
-    XConfigureEvent xce = e->xconfigure;
-    if (xce.width != g.xres || xce.height != g.yres) {
-	//Window size did change.
-	reshape_window(xce.width, xce.height);
-    }
+	//The ConfigureNotify is sent by the
+	//server if the window is resized.
+	if (e->type != ConfigureNotify)
+		return;
+	XConfigureEvent xce = e->xconfigure;
+	if (xce.width != g.xres || xce.height != g.yres) {
+		//Window size did change.
+		reshape_window(xce.width, xce.height);
+	}
+    
 }
 //-----------------------------------------------------------------------------
 
 void X11_wrapper::check_mouse(XEvent *e)
 {
-    static int savex = 0;
-    static int savey = 0;
+	static int savex = 0;
+	static int savey = 0;
 
-    //Weed out non-mouse events
-    if (e->type != ButtonRelease &&
-	    e->type != ButtonPress &&
-	    e->type != MotionNotify) {
-	//This is not a mouse event that we care about.
-	return;
-    }
-    //
-    if (e->type == ButtonRelease) {
-	return;
-    }
-    if (e->type == ButtonPress) {
-	if (e->xbutton.button==1) {
-	    //Left button was pressed.
-	    //int y = g.yres - e->xbutton.y;
-	    return;
+	//Weed out non-mouse events
+	if (e->type != ButtonRelease &&
+		e->type != ButtonPress &&
+		e->type != MotionNotify) {
+		//This is not a mouse event that we care about.
+		return;
 	}
-	if (e->xbutton.button==3) {
-	    //Right button was pressed.
-	    return;
+	//
+	if (e->type == ButtonRelease) {
+		return;
 	}
-    }
-    if (e->type == MotionNotify) {
-	//The mouse moved!
-	if (savex != e->xbutton.x || savey != e->xbutton.y) {
-	    savex = e->xbutton.x;
-	    savey = e->xbutton.y;
-	    //Code placed here will execute whenever the mouse moves.
+	if (e->type == ButtonPress) {
+		if (e->xbutton.button==1) {
+			//Left button was pressed.
+			//int y = g.yres - e->xbutton.y;
+			return;
+		}
+		if (e->xbutton.button==3) {
+			//Right button was pressed.
+			return;
+		}
+	}
+	if (e->type == MotionNotify) {
+		//The mouse moved!
+		if (savex != e->xbutton.x || savey != e->xbutton.y) {
+			savex = e->xbutton.x;
+			savey = e->xbutton.y;
+			//Code placed here will execute whenever the mouse moves.
 
 
+		}
 	}
-    }
 }
 
 int X11_wrapper::check_keys(XEvent *e)
 {
-    if (e->type != KeyPress && e->type != KeyRelease)
-	return 0;
-    int key = XLookupKeysym(&e->xkey, 0);
-    if (e->type == KeyPress) {
-	switch (key) {
-	    case XK_1:
-		//Key 1 was pressed
-		break;
-	    case XK_Escape:
-		//Escape key was pressed
-		return 1;
+	if (e->type != KeyPress && e->type != KeyRelease)
+		return 0;
+	int key = XLookupKeysym(&e->xkey, 0);
+	if (e->type == KeyPress) {
+		switch (key) {
+			case XK_1:
+				//Key 1 was pressed
+				break;
+			case XK_Escape:
+				//Escape key was pressed
+          return 1;
+		}
 	}
-    }
-    return 0;
+	return 0;
 }
 
 void init_opengl(void)
 {
-    //OpenGL initialization
-    glViewport(0, 0, g.xres, g.yres);
-    //Initialize matrices
-    glMatrixMode(GL_PROJECTION); glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW); glLoadIdentity();
-    //Set 2D mode (no perspective)
-    glOrtho(0, g.xres, 0, g.yres, -1, 1);
-    //Set the screen background color
-    glClearColor(0.1, 0.1, 0.1, 1.0);
+	//OpenGL initialization
+	glViewport(0, 0, g.xres, g.yres);
+	//Initialize matrices
+	glMatrixMode(GL_PROJECTION); glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW); glLoadIdentity();
+	//Set 2D mode (no perspective)
+	glOrtho(0, g.xres, 0, g.yres, -1, 1);
+	//Set the screen background color
+	glClearColor(0.1, 0.1, 0.1, 1.0);
 }
-
 void physics()
 {
     g.pos[0] += g.dir;
-    if (g.pos[0] >= (g.xres-g.w)) {
-	g.pos[0] = (g.xres-g.w);
-	g.dir = -g.dir;
+    if (g.pos[0] >= (g.xres - g.w)) {
+        g.pos[0] = (g.xres - g.w);
+        g.dir = - g.dir; 
     }
-    if (g.pos[0] <=g.w) {
-	g.pos[0] =g.w;
-	g.dir = -g.dir;
+    if (g.pos[0] <= g.w) {
+	    g.pos[0] = g.w;
+	    g.dir = -g.dir;
     }
-
 }
 
 void render()
@@ -266,8 +262,31 @@ void render()
     glClear(GL_COLOR_BUFFER_BIT);
     //Draw box.
     glPushMatrix();
-    glColor3ub(150, 160, 220);
     glTranslatef(g.pos[0], g.pos[1], 0.0f);
+    //Code for changing color starts here
+     if(g.xres > 350 && g.xres <450 ){
+         glColor3ub(56,79,210);
+     }
+     if (g.xres > 450 && g.xres <650){
+         glColor3ub (21, 46, 209);
+     }
+     if (g.xres > 650){
+         glColor3ub (0, 0, 255);
+     }
+     if (g.xres < 350 && g.xres > 250){
+         glColor3ub (209, 10, 120);
+     }
+     if (g.xres <250 && g.xres >150){
+         glColor3ub (209, 10, 70);
+     }
+     if (g.xres < 150) {
+         glColor3ub (255, 0, 0);
+     }
+     if (g.pos[0] == (g.xres - g.w)|| g.pos[0] == g.w ){
+        glColor3ub(255,0,0);
+    }
+    //ends here
+
     glBegin(GL_QUADS);
     glVertex2f(-g.w, -g.w);
     glVertex2f(-g.w,  g.w);
@@ -276,8 +295,3 @@ void render()
     glEnd();
     glPopMatrix();
 }
-
-
-
-
-
